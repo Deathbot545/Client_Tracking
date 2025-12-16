@@ -179,17 +179,6 @@ class MeetingList extends StatelessWidget {
 
                         const SizedBox(height: 2),
 
-                        // Creator
-                        Text(
-                          'By: $creatorDisplay',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[400],
-                                  ),
-                        ),
-
                         if (createdLabel.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
