@@ -307,7 +307,7 @@ class Meeting {
 
     // 👇 This is the ONLY place we write the timestamp
     if (createdAt != null) {
-      values['Meeting Start Time'] = createdAt!.toIso8601String();
+      values['Meeting Start Time'] = createdAt!.toUtc().toIso8601String();
     }
 
     if (client2Name != null && client2Name!.trim().isNotEmpty) {
