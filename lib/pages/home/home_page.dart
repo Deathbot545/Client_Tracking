@@ -83,23 +83,30 @@ class _HomePageState extends State<HomePage> {
           setState(() {});
         },
         onTap: (Meeting m) async {
-          debugPrint('👉 Tapped meeting: ${m.heading} | rowId=${m.rowId}');
-          try {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MeetingDetailPage(
-                  meeting: m,
-                  currentUserName: widget.userName,
-                ),
-              ),
-            );
-            debugPrint('⬅️ Returned from MeetingDetailPage');
-          } catch (e, st) {
-            debugPrint('❌ Navigation error: $e');
-            debugPrint(st.toString());
-          }
-        },
+  debugPrint('👉 Tapped meeting: ${m.heading} | rowId=${m.rowId}');
+  try {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MeetingDetailPage(
+          meeting: m,
+          currentUserName: widget.userName,
+        ),
+      ),
+    );
+
+    debugPrint('⬅️ Returned from MeetingDetailPage. result=$result');
+
+    if (result is String && result.isNotEmpty) {
+      setState(() {
+        _controller.myMeetings.removeWhere((x) => x.rowId == result);
+      });
+    }
+  } catch (e, st) {
+    debugPrint('❌ Navigation error: $e');
+    debugPrint(st.toString());
+  }
+},
       ),
       if (isAdmin)
         MeetingList(
@@ -112,24 +119,30 @@ class _HomePageState extends State<HomePage> {
             setState(() {});
           },
           onTap: (Meeting m) async {
-            debugPrint(
-                '👉 [ALL] Tapped meeting: ${m.heading} | rowId=${m.rowId}');
-            try {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MeetingDetailPage(
-                    meeting: m,
-                    currentUserName: widget.userName,
-                  ),
-                ),
-              );
-              debugPrint('⬅️ Returned from MeetingDetailPage (ALL)');
-            } catch (e, st) {
-              debugPrint('❌ Navigation error (ALL): $e');
-              debugPrint(st.toString());
-            }
-          },
+  debugPrint('👉 Tapped meeting: ${m.heading} | rowId=${m.rowId}');
+  try {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MeetingDetailPage(
+          meeting: m,
+          currentUserName: widget.userName,
+        ),
+      ),
+    );
+
+    debugPrint('⬅️ Returned from MeetingDetailPage. result=$result');
+
+    if (result is String && result.isNotEmpty) {
+      setState(() {
+        _controller.myMeetings.removeWhere((x) => x.rowId == result);
+      });
+    }
+  } catch (e, st) {
+    debugPrint('❌ Navigation error: $e');
+    debugPrint(st.toString());
+  }
+},
         ),
     ];
 

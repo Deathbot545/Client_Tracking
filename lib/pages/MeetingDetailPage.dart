@@ -343,7 +343,8 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       );
 
       // Pop this detail page, caller can refresh list if needed
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(rowId); // return the deleted rowId
+
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -355,6 +356,8 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       }
     }
   }
+
+  
 
   // ───────────── BUILD ─────────────
 

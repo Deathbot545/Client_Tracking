@@ -28,37 +28,24 @@ class MeetingList extends StatelessWidget {
       );
     }
 
-    // Error state
-    if (errorText != null && meetings.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: Colors.red[300], size: 32),
-            const SizedBox(height: 8),
-            Text(
-              errorText!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF38BDF8),
-                foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('Retry'),
-            ),
-          ],
+ // Error state (but list is empty) -> show "No Meetings" instead of error
+if (errorText != null && meetings.isEmpty) {
+  return Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.error_outline, color: Colors.red[300], size: 32),
+        const SizedBox(height: 8),
+        Text(
+          'No Meetings',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey[400]),
         ),
-      );
-    }
+      ],
+    ),
+  );
+}
+
 
     // Empty state
     if (meetings.isEmpty) {
