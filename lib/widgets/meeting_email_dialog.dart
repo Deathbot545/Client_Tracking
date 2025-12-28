@@ -54,7 +54,7 @@ class MeetingEmailDialog extends StatefulWidget {
 class _MeetingEmailDialogState extends State<MeetingEmailDialog> {
   /// 🔗 n8n webhook for SENDING EMAILS (not points)
   static const String _emailWebhookUrl =
-      'https://fitsit.app.n8n.cloud/webhook/ed645e11-0543-424d-a9bc-f180afe29065';
+      'https://fitsit.app.n8n.cloud/webhook/c4ef887e-3a3d-4234-9ee0-eb754d16c1b6';
 
   late TextEditingController _subjectController;
   late TextEditingController _bodyController;

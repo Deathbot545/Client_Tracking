@@ -1,23 +1,21 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/meeting.dart';
-import '../services/recording_service.dart';
 
 // UI widgets
 import '../widgets/meeting_header_card.dart';
 import '../widgets/meeting_clients_card.dart';
-import '../widgets/meeting_minutes_card.dart';
+import '../widgets/meeting_minutes_card.dart'; // ✅ still using same card file
 import '../widgets/meeting_location_card.dart';
 import '../widgets/meeting_email_dialog.dart';
 
 // Meeting service
 import '../services/meeting_service.dart';
 
-// 🔹 NEW: Glide delete API
+// Glide delete API
 import '../services/glide_meeting_api.dart';
 
 class MeetingDetailPage extends StatefulWidget {
@@ -35,13 +33,8 @@ class MeetingDetailPage extends StatefulWidget {
 }
 
 class _MeetingDetailPageState extends State<MeetingDetailPage> {
-  final RecordingService _recService = RecordingService.instance;
-
   // Local copy that will be replaced with the “full detail” from n8n
   late Meeting _meeting;
-
-  bool _isRecording = false;
-  String? _recordingPath;
 
   late TextEditingController _point1Controller;
   late TextEditingController _point2Controller;
@@ -54,7 +47,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
   static const String _updatePointsWebhookUrl =
       'https://fitsit.app.n8n.cloud/webhook/eb15cda9-cdb7-4b8f-96ba-9ee30db55a5d';
 
-  // 🔹 NEW: delete state
+  // delete state
   bool _isDeleting = false;
 
   @override
@@ -65,15 +58,9 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     _meeting = widget.meeting;
 
     // Pre-fill controllers from whatever we already have
-    _point1Controller = TextEditingController(
-      text: _meeting.agreedActions ?? '',
-    );
-    _point2Controller = TextEditingController(
-      text: _meeting.responsibilities ?? '',
-    );
-    _point3Controller = TextEditingController(
-      text: _meeting.nextSteps ?? '',
-    );
+    _point1Controller = TextEditingController(text: _meeting.agreedActions ?? '');
+    _point2Controller = TextEditingController(text: _meeting.responsibilities ?? '');
+    _point3Controller = TextEditingController(text: _meeting.nextSteps ?? '');
 
     // Then fetch the full details from n8n based on rowId
     if (_meeting.rowId != null && _meeting.rowId!.isNotEmpty) {
@@ -85,15 +72,9 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
 
   @override
   void dispose() {
-    // Stop recording if still running
-    if (_isRecording) {
-      _recService.stopRecording();
-    }
-
     _point1Controller.dispose();
     _point2Controller.dispose();
     _point3Controller.dispose();
-
     super.dispose();
   }
 
@@ -111,10 +92,9 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       if (!mounted) return;
 
       setState(() {
-        _meeting = detailed; // replace with richer data
+        _meeting = detailed;
         _loadingDetail = false;
 
-        // Update the 3 points from the detailed record
         _point1Controller.text = detailed.agreedActions ?? '';
         _point2Controller.text = detailed.responsibilities ?? '';
         _point3Controller.text = detailed.nextSteps ?? '';
@@ -133,78 +113,16 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     }
   }
 
-  /// Used by pull-to-refresh at the top
   Future<void> _refreshDetail() async {
     final rowId = _meeting.rowId;
     if (rowId == null || rowId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot refresh: missing rowId.'),
-        ),
+        const SnackBar(content: Text('Cannot refresh: missing rowId.')),
       );
       return;
     }
-
     await _loadDetailByRowId(rowId);
-  }
-
-  // ───────────── RECORDING LOGIC ─────────────
-
-  Future<void> _toggleRecording() async {
-    try {
-      if (_isRecording) {
-        // 🔴 stop + upload
-        final path = await _recService.stopRecording();
-        setState(() {
-          _isRecording = false;
-          _recordingPath = path;
-        });
-
-        if (path != null) {
-          final userId = _meeting.creatorId;
-          final rowId = _meeting.rowId;
-
-          if (rowId == null || rowId.isEmpty) {
-            if (kDebugMode) {
-              print('⚠️ Cannot upload recording: meeting.rowId is null/empty');
-            }
-            return;
-          }
-
-          print('➡️ Uploading recording for userId=$userId rowId=$rowId');
-
-          await _recService.uploadRecordingToN8n(
-            filePath: path,
-            userId: userId,
-            rowId: rowId,
-          );
-
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Recording uploaded. Minutes will appear after AI.'),
-            ),
-          );
-        }
-      } else {
-        // 🎙 start
-        final path = await _recService.startRecording();
-        setState(() {
-          _isRecording = true;
-          _recordingPath = path;
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Recording error: $e');
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Recording error: $e')),
-      );
-    }
   }
 
   // ───────────── EMAIL DIALOG ─────────────
@@ -212,7 +130,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
   Future<void> _openEmailDialog() async {
     await showMeetingEmailDialog(
       context: context,
-      meeting: _meeting, // detailed meeting
+      meeting: _meeting,
       currentUserName: widget.currentUserName,
       point1: _point1Controller.text.trim(),
       point2: _point2Controller.text.trim(),
@@ -220,7 +138,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     );
   }
 
-  // ───────────── UPDATE POINTS (POINT 1/2/3 → n8n) ─────────────
+  // ───────────── UPDATE POINTS ─────────────
 
   Future<void> _updatePoints() async {
     final rowId = _meeting.rowId;
@@ -229,9 +147,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     if (rowId == null || rowId.isEmpty || rowNumber == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Missing row information to update points.'),
-        ),
+        const SnackBar(content: Text('Missing row information to update points.')),
       );
       return;
     }
@@ -254,7 +170,6 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       if (!mounted) return;
 
       if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        // ✅ keep local model in sync so email dialog sees the new values
         setState(() {
           _meeting = _meeting.createCopyWith(
             agreedActions: _point1Controller.text.trim(),
@@ -269,9 +184,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Failed to update points: ${resp.statusCode} ${resp.reasonPhrase}',
-            ),
+            content: Text('Failed to update points: ${resp.statusCode} ${resp.reasonPhrase}'),
           ),
         );
       }
@@ -283,16 +196,14 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     }
   }
 
-  // ───────────── DELETE MEETING (Glide) ─────────────
+  // ───────────── DELETE MEETING ─────────────
 
   Future<void> _confirmAndDelete() async {
     final rowId = _meeting.rowId;
 
     if (rowId == null || rowId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot delete: missing Row ID from Glide.'),
-        ),
+        const SnackBar(content: Text('Cannot delete: missing Row ID from Glide.')),
       );
       return;
     }
@@ -309,19 +220,11 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
           ),
           actions: [
             TextButton(
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 6),
-              ),
               onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 6),
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text('Delete'),
             ),
@@ -342,22 +245,16 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
         const SnackBar(content: Text('Meeting deleted.')),
       );
 
-      // Pop this detail page, caller can refresh list if needed
-      Navigator.of(context).pop(rowId); // return the deleted rowId
-
+      Navigator.of(context).pop(rowId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Delete failed: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isDeleting = false);
-      }
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
-
-  
 
   // ───────────── BUILD ─────────────
 
@@ -390,7 +287,6 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
       ),
       body: Stack(
         children: [
-          // 👉 Pull-to-refresh on the whole detail screen
           RefreshIndicator(
             onRefresh: _refreshDetail,
             child: SingleChildScrollView(
@@ -399,20 +295,15 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Header (title, creator, createdAt, description…)
                   MeetingHeaderCard(meeting: m),
                   const SizedBox(height: 16),
 
-                  /// Clients card (client 1/2/3)
                   MeetingClientsCard(meeting: m),
                   const SizedBox(height: 16),
 
-                  /// Minutes + recording + points + send email button
+                  // ✅ same card, but now it's key points only
                   MeetingMinutesCard(
                     meeting: m,
-                    isRecording: _isRecording,
-                    recordingPath: _recordingPath,
-                    onToggleRecording: _toggleRecording,
                     onSendEmail: _openEmailDialog,
                     point1Controller: _point1Controller,
                     point2Controller: _point2Controller,
@@ -421,7 +312,6 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  /// Location map card
                   MeetingLocationCard(meeting: m),
 
                   if (_detailError != null) ...[
@@ -436,7 +326,6 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
             ),
           ),
 
-          // Thin loading bar at top when detail is loading
           if (_loadingDetail)
             Positioned(
               left: 0,
@@ -444,9 +333,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
               top: 0,
               child: LinearProgressIndicator(
                 backgroundColor: Colors.black26,
-                valueColor: const AlwaysStoppedAnimation(
-                  Color(0xFF38BDF8),
-                ),
+                valueColor: const AlwaysStoppedAnimation(Color(0xFF38BDF8)),
               ),
             ),
         ],

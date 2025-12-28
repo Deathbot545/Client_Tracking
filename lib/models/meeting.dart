@@ -296,50 +296,63 @@ class Meeting {
   ///   ...
   /// }
   Map<String, dynamic> toJsonForCreate() {
-    final Map<String, dynamic> values = {
-      'heading': heading,
-      'Client Name': client1Name,
-      'Client Email': client1Email,
-      // Store the Glide user id in "Creator"
-      'Creator': creatorId,
-      "Creator's Email": creatorEmail,
-    };
+  final Map<String, dynamic> values = {
+    // ✅ These MUST match Glide column names exactly (as in your CURL)
+    'heading': heading,
+    'Client Name': client1Name,
+    'Client Email': client1Email,
 
-    // 👇 This is the ONLY place we write the timestamp
-    if (createdAt != null) {
-      values['Meeting Start Time'] = createdAt!.toUtc().toIso8601String();
-    }
+    // Creator
+    'Creator': creatorId,
+    "Creator's Email": creatorEmail,
+    // Only include this if you really have a column called "Creator's Name"
+    // "Creator's Name": creatorName,
+  };
 
-    if (client2Name != null && client2Name!.trim().isNotEmpty) {
-      values['2nd Client Name'] = client2Name;
-    }
-    if (client2Email != null && client2Email!.trim().isNotEmpty) {
-      values['2nd Client Email'] = client2Email;
-    }
-    if (client3Name != null && client3Name!.trim().isNotEmpty) {
-      values['3rd Client Name'] = client3Name;
-    }
-    if (client3Email != null && client3Email!.trim().isNotEmpty) {
-      values['3rd Client Email copy'] = client3Email;
-    }
-
-    if (latitude != null && longitude != null) {
-      values['Location'] = '$latitude,$longitude';
-    }
-
-    if (agreedActions != null) {
-      values['Agreed Actions'] = agreedActions;
-    }
-    if (responsibilities != null) {
-      values['Responsibilities'] = responsibilities;
-    }
-    if (nextSteps != null) {
-      values['Next Steps'] = nextSteps;
-    }
-    if (finalMinutes != null) {
-      values['final'] = finalMinutes;
-    }
-
-    return values;
+  // ✅ Meeting Start Time (Glide date-time)
+  if (createdAt != null) {
+    values['Meeting Start Time'] = createdAt!.toUtc().toIso8601String();
   }
+
+  // ✅ Optional extra clients (ONLY if not empty)
+  if (client2Name != null && client2Name!.trim().isNotEmpty) {
+    values['2nd Client Name'] = client2Name!.trim();
+  }
+  if (client2Email != null && client2Email!.trim().isNotEmpty) {
+    values['2nd Client Email'] = client2Email!.trim();
+  }
+  if (client3Name != null && client3Name!.trim().isNotEmpty) {
+    values['3rd Client Name'] = client3Name!.trim();
+  }
+  if (client3Email != null && client3Email!.trim().isNotEmpty) {
+    values['3rd Client Email copy'] = client3Email!.trim();
+  }
+
+  // ✅ Location
+  if (latitude != null && longitude != null) {
+    values['Location'] = '$latitude,$longitude';
+  }
+
+  // ✅ Optional text fields if you want (only if filled)
+  if (description != null && description!.trim().isNotEmpty) {
+    values['Description'] = description!.trim();
+  }
+
+  // ✅ Key points
+  if (agreedActions != null && agreedActions!.trim().isNotEmpty) {
+    values['Agreed Actions'] = agreedActions!.trim();
+  }
+  if (responsibilities != null && responsibilities!.trim().isNotEmpty) {
+    values['Responsibilities'] = responsibilities!.trim();
+  }
+  if (nextSteps != null && nextSteps!.trim().isNotEmpty) {
+    values['Next Steps'] = nextSteps!.trim();
+  }
+
+  // ✅ If you want a default Status on create, uncomment:
+  // values['Status'] = 'Open';
+
+  return values;
+}
+
 }
